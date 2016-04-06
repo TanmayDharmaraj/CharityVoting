@@ -1,0 +1,42 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+<h2>Vote Here !</h2>
+
+<div class="row text-center">
+    <div class="col-xs-6">
+        <button id="DonaldTrump" value="DonaldTrump" class="btn btn-danger btn-lg">Donald Trump</button>
+    </div>
+    <div class="col-xs-6">
+        <button id="TanmayDharmaraj" value="TanmayDharmaraj" class="btn btn-success btn-lg">Tanmay Dharmaraj</button>
+    </div>
+</div>
+
+<div class="row" style="margin-top:30px">
+    @Html.ActionLink("Show Votes", "GetVotes", null, new { @class = "btn btn-default" })
+</div>
+
+
+@section scripts {
+    <script src="~/Scripts/jquery.signalR-2.2.0.js"></script>
+    <script src="/signalr/hubs"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var vote = $.connection.votingHub;
+            vote.client.upVote = function (data) {
+                var vote_html = "";
+                $.each(data, function (key, value) {
+                    $("*[data-votee='" + key + "']").html(value);
+                })
+                console.log("Up Vote!", data);
+            }
+            $.connection.hub.start().done(function () {
+                $("button").click(function () {
+                    console.log(this.value);
+                    vote.server.upVote(this.value);
+                });
+            });
+        });
+    </script>
+}

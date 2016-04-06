@@ -1,0 +1,92 @@
+﻿
+@{
+    ViewBag.Title = "GetVotes";
+}
+
+<h2>GetVotes</h2>
+<div class="row">
+    <canvas id="canvas" height="500" width="500"></canvas>
+</div>
+<div class="row text-center">
+    <div class="col-xs-6 ">
+        <p class="lead" data-votee="TanmayDharmaraj"></p>
+    </div>
+    <div class="col-xs-6">
+        <p class="lead" data-votee="DonaldTrump"></p>
+    </div>
+</div>
+@section scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+    <script src="~/Scripts/jquery.signalR-2.2.0.js"></script>
+    <script src="/signalr/hubs"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var VoteChart = function () {
+                var BarChart;
+                var BuildChartData = function (data) {
+                    var keys = new Array();
+                    var values = new Array();
+                    $.each(data, function (k, v) {
+                        console.log(k, v);
+                        keys.push(k);
+                        values.push(v);
+                    })
+                    return {
+                        labels: keys,
+                        datasets: [
+                            {
+                                label: "My First dataset",
+                                fillColor: "rgba(220,220,220,0.5)",
+                                strokeColor: "rgba(220,220,220,0.8)",
+                                highlightFill: "rgba(220,220,220,0.75)",
+                                highlightStroke: "rgba(220,220,220,1)",
+                                data: values
+                            }
+                        ]
+                    }
+                }
+
+                var UpdateChart = function (data) {
+                    if (!BarChart) {
+                        var chartData = VoteChart.BuildChartData(data);
+                        InitChart(chartData);
+                    }
+                    else {
+                        $.each(data, function (key, val) {
+                            var bars = BarChart.datasets[0].bars
+                            $.grep(bars, function (element, index) {
+                                if (element.label == key) {
+                                    element.value = val;
+                                }
+                            });
+                            //BarChart.datasets[0].bars[barIndex].value = value;
+                        })
+                        BarChart.update();
+                    }
+                }
+
+                var InitChart = function (data) {
+                    var ctx = document.getElementById("canvas").getContext('2d');
+                    BarChart = new Chart(ctx).Bar(data, { animationSteps: 15 });
+                }
+
+                return {
+                    BuildChartData: BuildChartData,
+                    InitChart: InitChart,
+                    UpdateChart: UpdateChart
+                }
+            }();
+
+            var vote = $.connection.votingHub;
+            vote.client.upVote = function (data) {
+                
+                VoteChart.UpdateChart(data);
+                //$.each(data, function (key, value) {
+                //    $("*[data-votee='" + key + "']").html(value);
+                //})
+            }
+            $.connection.hub.start().done(function () {
+            });
+        });
+    </script>
+}
